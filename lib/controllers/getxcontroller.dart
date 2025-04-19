@@ -7,53 +7,7 @@ class NfcFGetxController extends GetxController {
   final sIdm = ''.obs;
   final sEmpNo = ''.obs;
 
-  void checkservicelength(NfcTag tag) async {
-    try {
-      var nfcF = tag.data['nfcf'];
-      if (nfcF == null) {
-        print('FeliCaデータが見つかりません');
-        return;
-      }
-
-      // サービスコード
-      List<int> serviceCode = [0x0B, 0x00]; // サービスコード 00,0B
-
-      // Request Service コマンドの作成
-      final cmd = [
-        0x02, // Request Service コマンドコード
-        ...nfcF['identifier'], // IDm
-        serviceCode.length ~/ 2, // サービス数
-        ...serviceCode // サービスコード
-      ];
-      final command = Uint8List.fromList([cmd.length + 1, ...cmd]);
-
-      // NFCコマンド送信
-      final nfcf = NfcF.from(tag);
-      var response = await nfcf?.transceive(data: command);
-
-      if (response != null && response.length >= 2) {
-        // ステータスフラグチェック
-        int status1 = response[0];
-        int status2 = response[1];
-
-        if (status1 == 0x00 && status2 == 0x00) {
-          // サービスに割り当てられたブロック数を取得
-          int maxBlockCount = response[2]; // 3バイト目にブロック数情報
-          print('サービスコード $serviceCode の最大ブロック数: $maxBlockCount');
-        } else {
-          print(
-              'エラー発生: Status1=${status1.toRadixString(16)}, Status2=${status2.toRadixString(16)}');
-        }
-      } else {
-        print('レスポンスが不正です');
-      }
-    } catch (e) {
-      print('エラー発生: $e');
-    } finally {
-      NfcManager.instance.stopSession();
-    }
-  }
-
+  // 社員番号抜き出し
   String getEmployeeNumber(List<int> response) {
     String sEmployeeNumber = "";
 
@@ -84,6 +38,7 @@ class NfcFGetxController extends GetxController {
     return sEmployeeNumber;
   }
 
+  // NFCF読み込み
   void readFelicaBlocks() async {
     if (!await NfcManager.instance.isAvailable()) {
       print('NFCが使用できません');
